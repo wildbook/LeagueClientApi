@@ -46,6 +46,20 @@ namespace LeagueClientApi
 
         public bool CheckForLeague()
         {
+
+            var lc = Process.GetProcessesByName("LeagueClient");
+            foreach (var p in lc)
+            {
+                var path = p.MainModule.FileName;
+
+                if (path.Contains("RADS")) path = Regex.Split(path, @"RADS")[0];
+
+                if (!IsValidLeagueClientPath(path)) continue;
+                _lcBasePath = path;
+                CheckForExistingLockfile();
+                return true;
+            }
+
             var lcUx = Process.GetProcessesByName("LeagueClientUx");
             if (lcUx.Length > 0)
             {
@@ -53,16 +67,6 @@ namespace LeagueClientApi
                 return true;
             }
 
-            var lc = Process.GetProcessesByName("LeagueClient");
-            foreach (var p in lc)
-            {
-                var path = p.MainModule.FileName;
-                if (path.Contains("RADS")) path = Regex.Split(path, @"RADS\\")[0];
-                if (!IsValidLeagueClientPath(path)) continue;
-                _lcBasePath = path;
-                CheckForExistingLockfile();
-                return true;
-            }
             return false;
         }
 
@@ -119,6 +123,6 @@ namespace LeagueClientApi
 
         private static bool IsValidLeagueClientPath(string lcBasePath) =>
             Directory.Exists(Path.Combine(lcBasePath, "RADS")) &&
-            File.Exists(Path.Combine(lcBasePath, "LeagueClient.exe"));
+            (File.Exists(Path.Combine(lcBasePath, "LeagueClient.exe")) || Directory.Exists(Path.Combine(lcBasePath, "LeagueClient.app")));
     }
 }
